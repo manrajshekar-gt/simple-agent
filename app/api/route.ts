@@ -9,12 +9,13 @@ export async function POST(request: Request) {
     model: openai('gpt-4o-mini'),
     system: 'You are a customer service assistant. Use tools when needed.',
     prompt: prompt,
-    maxSteps: 3, 
+    // Modern property name for execution loop limits in this SDK version
+    maxAutomaticRoundTrips: 3, 
     tools: {
-      // Defining the tool as a clean configuration object handles type deduction natively
       checkPackage: {
         description: 'Get the delivery status of a package using its tracking ID.',
-        parameters: z.object({
+        // Modern property name for the Zod schema configuration
+        inputSchema: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
         execute: async ({ trackingId }: { trackingId: string }) => {
