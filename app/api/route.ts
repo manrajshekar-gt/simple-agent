@@ -7,14 +7,17 @@ const checkPackageStatus = tool({
   parameters: z.object({
     trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
   }),
-  // FIX: We explicitly tell TypeScript that trackingId is a string, and this function returns an object
-  execute: async ({ trackingId }: { trackingId: string }): Promise<{ status: string }> => {
+  // FIX: Simplified the input mapping to prevent Next.js 16 overload mismatch
+  execute: async (args) => {
     const mockDb: Record<string, string> = {
       'PKG-GT': 'Delivered to GT today at 6:18 PM.',
       'PKG-456': 'In transit. Expected delivery: Tomorrow by 5:00 PM.',
       'PKG-123': 'Delivered yesterday at 3:15 PM.'
     };
-    return { status: mockDb[trackingId] || 'Tracking ID not found.' };
+    
+    return { 
+      status: mockDb[args.trackingId] || 'Tracking ID not found.' 
+    };
   },
 });
 
