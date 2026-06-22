@@ -9,12 +9,12 @@ export async function POST(request: Request) {
     model: openai('gpt-4o-mini'),
     system: 'You are a customer service assistant. Use tools when needed.',
     prompt: prompt,
-    // Modern property name for execution loop limits in this SDK version
-    maxAutomaticRoundTrips: 3, 
+    // Standard parameter for multi-turn agent execution in this SDK version
+    maxSteps: 3, 
     tools: {
       checkPackage: {
         description: 'Get the delivery status of a package using its tracking ID.',
-        // Modern property name for the Zod schema configuration
+        // Standard structural property configuration name for the inline validation blueprint
         inputSchema: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
