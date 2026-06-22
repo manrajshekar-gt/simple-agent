@@ -2,13 +2,13 @@ import { openai } from '@ai-sdk/openai';
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
 
-// We wrap this inside the native tool function to correctly assign internal types
 const checkPackageStatus = tool({
   description: 'Get the delivery status of a package using its tracking ID.',
   parameters: z.object({
     trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
   }),
-  execute: async ({ trackingId }: { trackingId: string }) => {
+  // FIX: Passing a flat 'args' object removes the destructuring overload issue entirely
+  execute: async (args) => {
     const mockDb: Record<string, string> = {
       'PKG-GT': 'Delivered to GT today at 6:18 PM.',
       'PKG-456': 'In transit. Expected delivery: Tomorrow by 5:00 PM.',
@@ -16,7 +16,7 @@ const checkPackageStatus = tool({
     };
     
     return { 
-      status: mockDb[trackingId] || 'Tracking ID not found.' 
+      status: mockDb[args.trackingId] || 'Tracking ID not found.' 
     };
   },
 });
@@ -29,9 +29,9 @@ export async function POST(request: Request) {
     system: 'You are a customer service assistant. Use tools when needed.',
     prompt: prompt,
     tools: {
-      checkPackage: checkPackageStatus, // Maps cleanly because it inherits the full SDK Type
+      checkPackage: checkPackageStatus,
     },
-    maxSteps: 3, // Validated loop iteration count
+    maxSteps: 3, 
   });
 
   return Response.json({ response: result.text });
