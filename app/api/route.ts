@@ -12,7 +12,6 @@ export async function POST(request: Request) {
     tools: {
       checkPackage: {
         description: 'Get the delivery status of a package using its tracking ID.',
-        // FIX: Changed 'parameters' to 'inputSchema' to match the latest SDK version
         inputSchema: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
@@ -29,7 +28,8 @@ export async function POST(request: Request) {
         },
       },
     },
-    maxSteps: 3, 
+    // FIX: Changed maxSteps to maxAutomaticRoundTrips for your SDK version
+    maxAutomaticRoundTrips: 3, 
   });
 
   return Response.json({ response: result.text });
