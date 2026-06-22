@@ -12,7 +12,7 @@ const checkPackageStatus = tool({
     const mockDb: Record<string, string> = {
       'PKG-GT': 'Delivered to GT today at 6:18 PM.',
       'PKG-456': 'In transit. Expected delivery: Tomorrow by 5:00 PM.',
-      'PKG-123': 'Delivered yesterday at 3:15 PM.',
+      'PKG-123': 'Delivered yesterday at 3:15 PM.'
     };
     return { status: mockDb[trackingId] || 'Tracking ID not found.' };
   },
