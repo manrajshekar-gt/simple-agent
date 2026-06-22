@@ -9,13 +9,10 @@ export async function POST(request: Request) {
     model: openai('gpt-4o-mini'),
     system: 'You are a customer service assistant. Use tools when needed.',
     prompt: prompt,
-    // Standard parameter for multi-turn agent execution in this SDK version
-    maxSteps: 3, 
     tools: {
       checkPackage: {
         description: 'Get the delivery status of a package using its tracking ID.',
-        // Standard structural property configuration name for the inline validation blueprint
-        inputSchema: z.object({
+        parameters: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
         execute: async ({ trackingId }: { trackingId: string }) => {
@@ -33,5 +30,5 @@ export async function POST(request: Request) {
     },
   });
 
-  return Response.json({ response: result.text });
+  return Response.json({ response: result.text || 'Tool invocation requested.' });
 }
