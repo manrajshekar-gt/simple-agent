@@ -7,8 +7,8 @@ const checkPackageStatus = tool({
   parameters: z.object({
     trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
   }),
-  execute: async ({ trackingId }) => {
-    // This is your mock data. In the future, this would be a live PostgreSQL query.
+  // FIX: We explicitly tell TypeScript that trackingId is a string, and this function returns an object
+  execute: async ({ trackingId }: { trackingId: string }): Promise<{ status: string }> => {
     const mockDb: Record<string, string> = {
       'PKG-GT': 'Delivered to GT today at 6:18 PM.',
       'PKG-456': 'In transit. Expected delivery: Tomorrow by 5:00 PM.',
@@ -19,15 +19,15 @@ const checkPackageStatus = tool({
 });
 
 export async function POST(request: Request) {
-  const { prompt } = await request.json(); // The incoming question from the user
+  const { prompt } = await request.json();
 
   const result = await generateText({
-    model: openai('gpt-4o-mini'), // Calling OpenAI's brain
+    model: openai('gpt-4o-mini'),
     system: 'You are a customer service assistant. Use tools when needed.',
     prompt: prompt,
     tools: { checkPackage: checkPackageStatus },
-    maxSteps: 3, // This tells the SDK it can loop up to 3 times to think and run tools
+    maxSteps: 3, 
   });
 
-  return Response.json({ response: result.text }); // The final text answer
+  return Response.json({ response: result.text });
 }
