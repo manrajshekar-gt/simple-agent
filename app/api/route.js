@@ -12,7 +12,8 @@ export async function POST(request: Request) {
     tools: {
       checkPackage: {
         description: 'Get the delivery status of a package using its tracking ID.',
-        parameters: z.object({
+        // CORRECTED: 'inputSchema' is the exact property required by your SDK version
+        inputSchema: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
         execute: async ({ trackingId }: { trackingId: string }) => {
@@ -30,5 +31,5 @@ export async function POST(request: Request) {
     },
   });
 
-  return Response.json({ response: result.text || 'Tool invocation requested.' });
+  return Response.json({ response: result.text || 'Tool invocation processed.' });
 }
