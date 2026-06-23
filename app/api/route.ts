@@ -1,20 +1,20 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, tool } from 'ai';
+import { streamText } from 'ai';
 import { z } from 'zod';
 
 export async function POST(request: Request) {
   const { prompt } = await request.json();
 
-  const result = await streamText({
+  const result = streamText({
     model: openai('gpt-4o-mini'),
-    system: 'You are a customer service assistant. Use tools when needed to discover order status, then format a helpful summary sentence back to the user.',
+    system: 'You are a customer service assistant. Use tools when needed to check package statuses, then format a helpful summary sentence back to the user.',
     prompt: prompt,
-    // Fully supported natively inside streamText for auto-looping agent executions
+    // Enable multi-turn agent loops cleanly
     maxSteps: 5, 
     tools: {
-      checkPackage: tool({
+      checkPackage: {
         description: 'Get the delivery status of a package using its tracking ID.',
-        inputSchema: z.object({
+        parameters: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
         execute: async ({ trackingId }: { trackingId: string }) => {
@@ -28,10 +28,9 @@ export async function POST(request: Request) {
             status: mockDb[trackingId] || 'Tracking ID not found.' 
           };
         },
-      }),
+      },
     },
   });
 
-  // Returns the streaming data chunks back to the client natively
   return result.toDataStreamResponse();
 }
