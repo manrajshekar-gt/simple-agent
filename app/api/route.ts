@@ -1,20 +1,21 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { generateText, tool, stepCountIs } from 'ai';
 import { z } from 'zod';
 
 export async function POST(request: Request) {
   const { prompt } = await request.json();
 
-  const result = streamText({
+  const result = await generateText({
     model: openai('gpt-4o-mini'),
-    system: 'You are a customer service assistant. Use tools when needed to check package statuses, then format a helpful summary sentence back to the user.',
+    system: 'You are a customer service assistant. Use tools when needed to discover order status, then format a helpful summary sentence back to the user.',
     prompt: prompt,
-    // Enable multi-turn agent loops cleanly
-    maxSteps: 5, 
+    // Modern multi-turn configuration syntax for this SDK version
+    stopWhen: stepCountIs(5), 
     tools: {
-      checkPackage: {
+      checkPackage: tool({
         description: 'Get the delivery status of a package using its tracking ID.',
-        parameters: z.object({
+        // Modern parameter name configuration
+        inputSchema: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
         execute: async ({ trackingId }: { trackingId: string }) => {
@@ -28,9 +29,10 @@ export async function POST(request: Request) {
             status: mockDb[trackingId] || 'Tracking ID not found.' 
           };
         },
-      },
+      }),
     },
   });
 
-  return result.toDataStreamResponse();
+  // result.text automatically grabs the final answer sentence after all turns finish
+  return Response.json({ response: result.text || 'Processing complete.' });
 }
