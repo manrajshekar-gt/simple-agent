@@ -7,10 +7,9 @@ export async function POST(request: Request) {
 
   const result = await generateText({
     model: openai('gpt-4o-mini'),
-    system: 'You are a customer service assistant. Use tools when needed to check status, then report the exact status back to the user.',
+    // Note: AI SDK 6/7 uses 'system' instruction contexts natively on single-turn configurations
+    system: 'You are a customer service assistant. Use tools when needed.',
     prompt: prompt,
-    // Standard property for enabling multi-step loops in the current SDK version
-    maxSteps: 5, 
     tools: {
       checkPackage: tool({
         description: 'Get the delivery status of a package using its tracking ID.',
@@ -32,5 +31,9 @@ export async function POST(request: Request) {
     },
   });
 
-  return Response.json({ response: result.text });
+  // If the model calls a tool, extract the value to return to your user
+  const toolResult = result.toolResults?.[0]?.result as { status: string } | undefined;
+  const finalAnswer = toolResult ? toolResult.status : (result.text || 'Processing complete.');
+
+  return Response.json({ response: finalAnswer });
 }
