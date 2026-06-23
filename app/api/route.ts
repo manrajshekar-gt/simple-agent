@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { generateText } from 'ai';
+import { generateText, tool } from 'ai';
 import { z } from 'zod';
 
 export async function POST(request: Request) {
@@ -7,16 +7,17 @@ export async function POST(request: Request) {
 
   const result = await generateText({
     model: openai('gpt-4o-mini'),
-    system: 'You are a customer service assistant. Use tools when needed.',
+    system: 'You are a customer service assistant. Use tools when needed to check status, then report the exact status back to the user.',
     prompt: prompt,
+    // Standard property for enabling multi-step loops in the current SDK version
+    maxSteps: 5, 
     tools: {
-      checkPackage: {
+      checkPackage: tool({
         description: 'Get the delivery status of a package using its tracking ID.',
-        // CORRECTED: 'inputSchema' is the exact property required by your SDK version
-        inputSchema: z.object({
+        parameters: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
-        execute: async ({ trackingId }: { trackingId: string }) => {
+        execute: async ({ trackingId }) => {
           const mockDb: Record<string, string> = {
             'PKG-GT': 'Delivered to GT today at 6:18 PM.',
             'PKG-456': 'In transit. Expected delivery: Tomorrow by 5:00 PM.',
@@ -27,9 +28,9 @@ export async function POST(request: Request) {
             status: mockDb[trackingId] || 'Tracking ID not found.' 
           };
         },
-      },
+      }),
     },
   });
 
-  return Response.json({ response: result.text || 'Tool invocation processed.' });
+  return Response.json({ response: result.text });
 }
