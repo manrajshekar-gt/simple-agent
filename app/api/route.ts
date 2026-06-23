@@ -7,16 +7,19 @@ export async function POST(request: Request) {
 
   const result = await generateText({
     model: openai('gpt-4o-mini'),
-    // Note: AI SDK 6/7 uses 'system' instruction contexts natively on single-turn configurations
-    system: 'You are a customer service assistant. Use tools when needed.',
+    system: 'You are a customer service assistant. Use tools when needed to discover order status, then format a helpful summary sentence back to the user.',
     prompt: prompt,
+    // The latest version of the core SDK supports maxSteps for automatic execution loops
+    maxSteps: 5, 
     tools: {
       checkPackage: tool({
         description: 'Get the delivery status of a package using its tracking ID.',
-        parameters: z.object({
+        // inputSchema is the exact required property name for schemas in the latest version
+        inputSchema: z.object({
           trackingId: z.string().describe('The tracking ID, e.g., PKG-123'),
         }),
-        execute: async ({ trackingId }) => {
+        // Explicitly type the incoming destructured arguments object to pass strict validation
+        execute: async ({ trackingId }: { trackingId: string }) => {
           const mockDb: Record<string, string> = {
             'PKG-GT': 'Delivered to GT today at 6:18 PM.',
             'PKG-456': 'In transit. Expected delivery: Tomorrow by 5:00 PM.',
@@ -31,9 +34,6 @@ export async function POST(request: Request) {
     },
   });
 
-  // If the model calls a tool, extract the value to return to your user
-  const toolResult = result.toolResults?.[0]?.result as { status: string } | undefined;
-  const finalAnswer = toolResult ? toolResult.status : (result.text || 'Processing complete.');
-
-  return Response.json({ response: finalAnswer });
+  // Because maxSteps is running, result.text holds the final compiled sentence from the model
+  return Response.json({ response: result.text || 'Processing complete.' });
 }
